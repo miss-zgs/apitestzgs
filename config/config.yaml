@@ -1,0 +1,29 @@
+# 环境配置
+environments:
+  dev:
+    base_url: "https://dev-api.example.com"
+    timeout: 30
+  test:
+    base_url: "https://jsonplaceholder.typicode.com"
+    timeout: 30
+  pre:
+    base_url: "https://pre-api.example.com"
+    timeout: 30
+  prod:
+    base_url: "https://api.example.com"
+    timeout: 30
+
+# 当前使用的环境
+current_env: "test"
+
+# 全局请求配置
+request:
+  timeout: 30
+  retry_count: 2
+  retry_interval: 1
+  verify_ssl: false
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
