@@ -66,7 +66,12 @@ def assert_json_not_empty(response, field_path: str):
 
 
 def extract_json_field(response, field_path: str) -> Any:
-    """提取 jsonpath 对应的值（不做断言，仅返回）"""
+    """
+    提取 jsonpath 对应的值（不做断言，仅返回）
+
+    注意：如果需要提取变量并存入上下文供后续接口使用，
+    请使用 utils.context.extract_and_save() 代替。
+    """
     body = response.json()
     matches = jsonpath_parse(field_path).find(body)
     if not matches:

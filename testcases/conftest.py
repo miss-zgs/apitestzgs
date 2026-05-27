@@ -1,17 +1,43 @@
 """
 pytest 全局 fixture
 """
-import logging
-import sys
 import os
+import sys
 
 import pytest
 
 # 将项目根目录加入 sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from utils.logger import setup_logging
 from utils.http_client import HttpClient
 from utils.data_loader import load_test_data
+from utils.context import context
+from config.settings import get_env_var
+
+# 项目启动时初始化日志（控制台 + 文件双输出）
+setup_logging()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def inject_env_variables():
+    """
+    将 .env 中的环境变量注入全局上下文，
+    用例中可通过 ${FLIGGY_CLIENT_ID} 等语法引用
+    """
+    import time
+    env_keys = [
+        "FLIGGY_CLIENT_ID",
+        "FLIGGY_CLIENT_SECRET",
+        "FLIGGY_ENV",
+    ]
+    for key in env_keys:
+        value = get_env_var(key)
+        if value:
+            context.set(key, value)
+
+    # 注入时间戳变量，用于生成唯一订单号（如 resellerOrderNo）
+    context.set("timestamp", str(int(time.time())))
 
 
 @pytest.fixture(scope="session")
@@ -20,15 +46,7 @@ def http_client():
     client = HttpClient()
     yield client
     client.clear_session()
-
-
-@pytest.fixture(scope="session")
-def autouse_logging():
-    """统一日志格式"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    )
+    context.clear()
 
 
 def load_cases(file_name: str):

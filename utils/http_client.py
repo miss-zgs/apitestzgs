@@ -27,6 +27,7 @@
 import json
 import logging
 import time
+import uuid
 from typing import Optional, Union
 
 import requests
@@ -270,12 +271,15 @@ class HttpClient:
         kwargs.setdefault("timeout", self.timeout)
         kwargs.setdefault("verify", self.verify_ssl)
 
-        # 4. 带重试的请求发送
+        # 4. 为本次请求生成唯一 Key，方便日志排查
+        request_id = f"R-{uuid.uuid4().hex[:4]}"
+
+        # 5. 带重试的请求发送
         last_exception = None
         for attempt in range(1, self.retry_count + 1):
             try:
-                # 记录请求日志
-                self._log_request(method, url, attempt, kwargs)
+                # 记录请求日志（带唯一 Key）
+                self._log_request(request_id, method, url, attempt, kwargs)
 
                 # 记录开始时间，用于计算请求耗时
                 start_time = time.time()
@@ -286,15 +290,15 @@ class HttpClient:
                 # 计算请求耗时（保留 3 位小数）
                 elapsed = round(time.time() - start_time, 3)
 
-                # 记录响应日志
-                self._log_response(response, elapsed)
+                # 记录响应日志（带唯一 Key）
+                self._log_response(request_id, response, elapsed)
 
                 # 请求成功，直接返回响应
                 return response
             except requests.RequestException as exc:
                 # 请求失败，记录异常并判断是否继续重试
                 last_exception = exc
-                logger.warning("请求失败 [%s/%s]: %s", attempt, self.retry_count, exc)
+                logger.warning("[%s] 请求失败 [%s/%s]: %s", request_id, attempt, self.retry_count, exc)
                 if attempt < self.retry_count:
                     # 还有重试机会，等待一段时间后继续
                     time.sleep(self.retry_interval)
@@ -303,41 +307,34 @@ class HttpClient:
         raise last_exception
 
     @staticmethod
-    def _log_request(method: str, url: str, attempt: int, kwargs: dict):
+    def _log_request(request_id: str, method: str, url: str, attempt: int, kwargs: dict):
         """
-        记录请求日志
+        记录请求日志（带唯一 Key）
 
-        以 INFO 级别记录请求方法、URL 和重试次数；
-        以 DEBUG 级别记录请求体和查询参数（避免 INFO 日志过于冗长）。
-
+        :param request_id: 本次请求的唯一标识，如 R-a3f8
         :param method: HTTP 方法
         :param url: 完整请求 URL
         :param attempt: 当前是第几次尝试
         :param kwargs: 请求参数字典
         """
-        logger.info(">>> [%s] %s (attempt %s)", method, url, attempt)
-        # 请求体可能在 json 或 data 字段中
+        logger.info("[%s] >>> [%s] %s (attempt %s)", request_id, method, url, attempt)
         body = kwargs.get("json") or kwargs.get("data")
         if body:
-            logger.debug("    Body: %s", json.dumps(body, ensure_ascii=False) if isinstance(body, dict) else body)
+            logger.debug("[%s]     Body: %s", request_id, json.dumps(body, ensure_ascii=False) if isinstance(body, dict) else body)
         if kwargs.get("params"):
-            logger.debug("    Params: %s", kwargs["params"])
+            logger.debug("[%s]     Params: %s", request_id, kwargs["params"])
 
     @staticmethod
-    def _log_response(response: requests.Response, elapsed: float):
+    def _log_response(request_id: str, response: requests.Response, elapsed: float):
         """
-        记录响应日志
+        记录响应日志（带唯一 Key）
 
-        以 INFO 级别记录状态码、URL 和耗时；
-        以 DEBUG 级别记录响应体（JSON 格式优先，否则截取前 500 字符的文本）。
-
+        :param request_id: 本次请求的唯一标识，如 R-a3f8
         :param response: requests.Response 响应对象
         :param elapsed: 请求耗时（秒）
         """
-        logger.info("<<< [%s] %s (%.3fs)", response.status_code, response.url, elapsed)
+        logger.info("[%s] <<< [%s] %s (%.3fs)", request_id, response.status_code, response.url, elapsed)
         try:
-            # 尝试以 JSON 格式记录响应体
-            logger.debug("    Response: %s", response.json())
+            logger.debug("[%s]     Response: %s", request_id, response.json())
         except ValueError:
-            # 如果响应不是 JSON 格式，截取前 500 字符记录
-            logger.debug("    Response: %s", response.text[:500])
+            logger.debug("[%s]     Response: %s", request_id, response.text[:500])

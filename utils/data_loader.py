@@ -91,9 +91,15 @@ def load_test_data(file_path: str) -> List[dict]:
         supported = ", ".join(sorted(_LOADER_MAP.keys()))
         raise ValueError(f"不支持的文件格式 '{ext}'，当前支持: {supported}")
 
-    logger.info("加载测试数据: %s (格式: %s)", file_path, ext)
+    # 根据配置开关决定是否输出数据加载日志
+    from config.settings import load_config
+    show_loader_log = load_config().get("logging", {}).get("show_data_loader", True)
+
+    if show_loader_log:
+        logger.info("加载测试数据: %s (格式: %s)", file_path, ext)
     data = loader(file_path)
-    logger.info("成功加载 %d 条用例数据", len(data))
+    if show_loader_log:
+        logger.info("成功加载 %d 条用例数据", len(data))
     return data
 
 
