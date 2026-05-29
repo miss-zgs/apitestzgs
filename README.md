@@ -2,31 +2,51 @@
 
 基于 Python + Pytest 的通用接口自动化测试框架，开箱即用。
 
-## 更新日志
+## 前置准备（新电脑必读）
 
-### v1.1.0（2026-05-27）
+从 Git 拉取项目后，按以下步骤即可运行：
 
-**接口依赖编排 + 变量提取替换 & 工程优化**
+### 1. Python 环境
 
-- **用例执行引擎**：新增 `utils/case_executor.py`，抽离通用执行逻辑（`execute_case` / `execute_chain` / `parse_csv_case`），测试文件只需一行调用
-- **飞猪接口接入**：新增接机查价 + 创单用例（`data/test_fliggy_pickup.yaml`），完整串行链路：查价 → 提取报价编码 → 创单
-- **环境变量管理**：通过 `.env` 文件管理敏感信息（clientId / clientSecret），新增 `.env.example` 模板，新电脑 `cp .env.example .env` 填值即用
-- **模块合并优化**：`context.py` + `variable_parser.py` 合并为 `context.py`，减少文件数，降低理解成本
-- **数据加载日志开关**：`config.yaml` 新增 `show_data_loader` 配置，控制加载日志显示/隐藏
-- **请求唯一 Key 恢复**：修复 `[R-xxxx]` 唯一请求标识丢失的问题
-- **Git 规范化**：从仓库中移除 `.idea/` IDE 配置目录
+需要 **Python 3.9+**，确认版本：
 
-### v1.0.0（2026-05-26）
+```bash
+python3 --version
+```
 
-**框架基础搭建**
+### 2. 安装依赖
 
-- 统一 HTTP 请求封装（GET/POST/PUT/DELETE/PATCH/上传）
-- 多格式数据驱动（YAML / JSON / Excel / CSV）
-- 通用断言工具（状态码 / jsonpath / 包含 / 类型 / 非空）
-- 多环境切换（dev / test / pre / prod）
-- 全局上下文 + `${变量名}` 语法替换
-- 日志双输出（控制台 + 按天切分文件）
-- Allure 报告支持
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 配置环境变量
+
+项目中的敏感信息（API 密钥等）通过 `.env` 文件管理，**该文件不会被 Git 同步**，需要手动创建：
+
+```bash
+cp .env.example .env
+```
+
+然后编辑 `.env`，填入真实值：
+
+```
+FLIGGY_CLIENT_ID=你的clientId
+FLIGGY_CLIENT_SECRET=你的clientSecret
+FLIGGY_ENV=test-
+```
+
+> ⚠️ 如果不配置 `.env`，飞猪相关用例会失败，但不影响其他用例运行。
+
+### 4. 运行测试
+
+```bash
+# 运行全部用例
+python3 run.py
+
+# 只运行基础示例用例（不依赖 .env）
+python3 -m pytest testcases/test_demo.py::test_yaml_driven -v
+```
 
 ---
 
@@ -75,29 +95,9 @@ apitestzgs/
 └── requirements.txt         # 依赖清单
 ```
 
-## 快速开始
-
-### 1. 安装依赖
+## 常用运行方式
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 2. 配置环境变量
-
-```bash
-# 复制模板文件
-cp .env.example .env
-
-# 编辑 .env，填入真实的认证信息
-```
-
-### 3. 运行测试
-
-```bash
-# 运行全部测试用例
-python3 run.py
-
 # 指定环境运行
 python3 run.py --env dev
 
@@ -107,20 +107,16 @@ python3 run.py -k test_yaml
 # 只运行接口依赖编排用例
 python3 -m pytest testcases/test_demo.py::test_dependency_chain -v
 
+# 只运行飞猪接口用例
+python3 -m pytest testcases/test_demo.py::test_fliggy_pickup_price -v
+
 # 运行 HttpClient 使用示例（调试学习用）
 python3 example_usage.py
-```
 
-### 4. 生成 Allure 报告
-
-```bash
+# 生成 Allure 报告
 pytest testcases/ --alluredir=reports/allure-results
 allure serve reports/allure-results
-```
 
-### 5. 查看日志
-
-```bash
 # 查看当天日志
 cat logs/$(date +%Y-%m-%d).log
 
