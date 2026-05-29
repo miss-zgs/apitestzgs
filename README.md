@@ -2,6 +2,34 @@
 
 基于 Python + Pytest 的通用接口自动化测试框架，开箱即用。
 
+## 更新日志
+
+### v1.1.0（2026-05-27）
+
+**接口依赖编排 + 变量提取替换 & 工程优化**
+
+- **用例执行引擎**：新增 `utils/case_executor.py`，抽离通用执行逻辑（`execute_case` / `execute_chain` / `parse_csv_case`），测试文件只需一行调用
+- **飞猪接口接入**：新增接机查价 + 创单用例（`data/test_fliggy_pickup.yaml`），完整串行链路：查价 → 提取报价编码 → 创单
+- **环境变量管理**：通过 `.env` 文件管理敏感信息（clientId / clientSecret），新增 `.env.example` 模板，新电脑 `cp .env.example .env` 填值即用
+- **模块合并优化**：`context.py` + `variable_parser.py` 合并为 `context.py`，减少文件数，降低理解成本
+- **数据加载日志开关**：`config.yaml` 新增 `show_data_loader` 配置，控制加载日志显示/隐藏
+- **请求唯一 Key 恢复**：修复 `[R-xxxx]` 唯一请求标识丢失的问题
+- **Git 规范化**：从仓库中移除 `.idea/` IDE 配置目录
+
+### v1.0.0（2026-05-26）
+
+**框架基础搭建**
+
+- 统一 HTTP 请求封装（GET/POST/PUT/DELETE/PATCH/上传）
+- 多格式数据驱动（YAML / JSON / Excel / CSV）
+- 通用断言工具（状态码 / jsonpath / 包含 / 类型 / 非空）
+- 多环境切换（dev / test / pre / prod）
+- 全局上下文 + `${变量名}` 语法替换
+- 日志双输出（控制台 + 按天切分文件）
+- Allure 报告支持
+
+---
+
 ## 核心特性
 
 - **统一请求封装** — GET/POST/PUT/DELETE/PATCH/文件上传，自动重试、日志记录、Session 管理
@@ -23,10 +51,10 @@ apitestzgs/
 │   └── settings.py          # 配置读取工具
 ├── utils/
 │   ├── http_client.py       # 统一 HTTP 请求封装（含唯一 Key、重试、日志）
+│   ├── case_executor.py     # 用例执行引擎（execute_case / execute_chain）
 │   ├── data_loader.py       # 多格式用例数据加载器
 │   ├── assertion.py         # 通用断言工具
-│   ├── context.py           # 全局上下文管理器（接口间变量共享）
-│   ├── variable_parser.py   # 变量解析器（${} 语法替换 + jsonpath 提取）
+│   ├── context.py           # 全局上下文 + 变量解析器（${} 替换 + jsonpath 提取）
 │   └── logger.py            # 日志初始化（控制台 + 文件双输出）
 ├── api/
 │   └── base_api.py          # 接口层基类
@@ -37,7 +65,8 @@ apitestzgs/
 │   ├── test_demo.yaml       # YAML 格式用例（独立接口）
 │   ├── test_demo.json       # JSON 格式用例
 │   ├── test_demo.csv        # CSV 格式用例
-│   └── test_dependency.yaml # 接口依赖编排用例（串行 + 变量传递）
+│   ├── test_dependency.yaml # 接口依赖编排用例（串行 + 变量传递）
+│   └── test_fliggy_pickup.yaml # 飞猪接机查价+创单用例
 ├── logs/                    # 日志文件目录（按天切分，自动保留 30 天）
 ├── reports/                 # 测试报告输出目录
 ├── example_usage.py         # HttpClient 使用示例（调试学习用）
@@ -54,7 +83,16 @@ apitestzgs/
 pip install -r requirements.txt
 ```
 
-### 2. 运行测试
+### 2. 配置环境变量
+
+```bash
+# 复制模板文件
+cp .env.example .env
+
+# 编辑 .env，填入真实的认证信息
+```
+
+### 3. 运行测试
 
 ```bash
 # 运行全部测试用例
@@ -73,14 +111,14 @@ python3 -m pytest testcases/test_demo.py::test_dependency_chain -v
 python3 example_usage.py
 ```
 
-### 3. 生成 Allure 报告
+### 4. 生成 Allure 报告
 
 ```bash
 pytest testcases/ --alluredir=reports/allure-results
 allure serve reports/allure-results
 ```
 
-### 4. 查看日志
+### 5. 查看日志
 
 ```bash
 # 查看当天日志
