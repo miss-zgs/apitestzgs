@@ -62,14 +62,14 @@ def test_dependency_chain(http_client):
 
     用例文件中通过 extract 提取变量，后续用例通过 ${变量名} 引用
     """
-    execute_chain(load_cases("test_dependency.yaml"), http_client)
+    execute_chain(load_cases("test_dependency.yaml"), http_client, case_file="data/test_dependency.yaml")
 
 
 # ---------- 飞猪接口测试（串行执行） ----------
 
 def test_fliggy_pickup_price(http_client):
-    """飞猪道旅 - 接机查价接口"""
-    execute_chain(load_cases("test_fliggy_pickup.yaml"), http_client)
+    """飞猪道旅 - 接机查价+创单"""
+    execute_chain(load_cases("test_fliggy_pickup.yaml"), http_client, case_file="data/test_fliggy_pickup.yaml")
 
 
 
