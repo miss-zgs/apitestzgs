@@ -24,7 +24,7 @@
       type: "1"
     luggage: 1
     passengers: 3
-    useTime: "2026-05-28 21:44:00"
+    useTime: "${tomorrow} 21:44:00"
   extract:
     quotation_code: $.data.vehicleQuotationList[0].quotationCode    # 提取第一个车型报价编码
   expect:
@@ -60,6 +60,6 @@
           socialWay: "wechat"
     passengers: 4
     luggage: 1
-    useTime: "2026-05-28 13:55:00"
+    useTime: "${tomorrow} 13:55:00"
   expect:
     status_code: 200

@@ -26,6 +26,8 @@ def inject_env_variables():
     用例中可通过 ${FLIGGY_CLIENT_ID} 等语法引用
     """
     import time
+    from datetime import datetime, timedelta
+
     env_keys = [
         "FLIGGY_CLIENT_ID",
         "FLIGGY_CLIENT_SECRET",
@@ -38,6 +40,10 @@ def inject_env_variables():
 
     # 注入时间戳变量，用于生成唯一订单号（如 resellerOrderNo）
     context.set("timestamp", str(int(time.time())))
+
+    # 注入动态日期变量，避免用例中写死日期导致过期
+    tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    context.set("tomorrow", tomorrow)
 
 
 @pytest.fixture(scope="session")
